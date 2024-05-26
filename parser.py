@@ -19,9 +19,16 @@ def p_statements(p):
     else:
         p[0] = p[1] + [p[2]]
 
+def p_expression_string(p):
+    'expression : STRING'
+    p[0] = p[1]
+
+def p_expression_symbol(p):
+    'expression : SYMBOL'
+    p[0] = p[1]
 
 def p_statement_println(p):
-    'statement : PRINTLN COLON STRING'
+    'statement : PRINTLN COLON expression'
     print(f'println statement found at line {p.lineno(1)}: {p[3]}')
     p[0] = ('PRINTLN', p[3])
 

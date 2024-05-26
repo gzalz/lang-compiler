@@ -1,3 +1,3 @@
-let message = "string"
-println: "Line 1"
-println: "Line 2"
+let var = "bar"
+println: "foo"
+println: var

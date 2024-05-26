@@ -10,6 +10,7 @@ from parser import *
 # TODO: ASTIterator is totally hacky. Do this for real
 
 GID = 0
+GLOBAL_SCOPE = {}
 
 lexer = lex.lex()
 parser = yacc.yacc()
@@ -47,7 +48,8 @@ class ASTNode:
 
 class ASTNodeType(Enum):
     MAIN = 1
-    PRINTLN = 2
+    LET = 2
+    PRINTLN = 3
 
 def parse_input(input_string):
     result = parser.parse(input_string, lexer=lexer)
@@ -68,12 +70,38 @@ def gen_println(module, builder, ir, printval):
     print(f"gen_println: {printval}")
     global GID
     name = f"println_{GID}"
+    printval = printval[1:-1]
     printval_global = ir.GlobalVariable(module, ir.ArrayType(ir.IntType(8), len(printval)+1), name=name)
     printval_global.initializer = ir.Constant(ir.ArrayType(ir.IntType(8), len(printval)+1),
             bytearray((printval+"\0").encode("utf8")))
     printval_global.global_constant = True
     GID = GID+1
     return builder.gep(printval_global, [ir.IntType(32)(0), ir.IntType(32)(0)], inbounds=True)
+
+def gen_let(module, builder, ir, name, val):
+    print(f"gen_let: {name} = {val}")
+    global GLOBAL_SCOPE
+    val_global = ir.GlobalVariable(module, ir.ArrayType(ir.IntType(8), len(val)+1), name=name)
+    val_global.initializer = ir.Constant(ir.ArrayType(ir.IntType(8), len(val)+1),
+            bytearray((val+"\0").encode("utf8")))
+    val_global.global_constant = True
+    GLOBAL_SCOPE[name] = val
+    return builder.gep(val_global, [ir.IntType(32)(0), ir.IntType(32)(0)], inbounds=True)
+
+def import_standard_library(module, ir):
+    # Declare the puts function from the C standard library
+    puts_func_type = ir.FunctionType(ir.IntType(32), [ir.PointerType(ir.IntType(8))], var_arg=False)
+    puts_func = ir.Function(module, puts_func_type, name="puts")
+
+    # Declare the printf function from the C standard library
+    # printf_func_type = ir.FunctionType(ir.IntType(32), [ir.PointerType(ir.IntType(8))], var_arg=True)
+    # printf_func = ir.Function(module, printf_func_type, name="printf")
+
+    # Declare the strlen function from the C standard library
+    strlen_func_type = ir.FunctionType(ir.IntType(32), [ir.PointerType(ir.IntType(8))], var_arg=False)
+    strlen_func = ir.Function(module, strlen_func_type, name="strlen")
+
+    return puts_func
 
 def codegen(ast):
     # Create a new LLVM module
@@ -89,6 +117,7 @@ def codegen(ast):
     #    print(node)
     #print("="*80)
     builder = None
+    puts_func = None
     fn_ptrs = []
     ast = ASTIterator(ast)
     while ast is not None:
@@ -99,10 +128,17 @@ def codegen(ast):
         if node.node_type == ASTNodeType.MAIN:
             main_func, bldr = gen_main(module, ir)
             builder = bldr
+            puts_func = import_standard_library(module, ir)
         elif node.node_type == ASTNodeType.PRINTLN:
             print("Println Node: " + str(node.arguments[0]))
-            println_ptr = gen_println(module, builder, ir, node.arguments[0])
-            fn_ptrs.append(println_ptr)
+            if not node.arguments[0][0] == "\"":
+                println_ptr = gen_println(module, builder, ir, GLOBAL_SCOPE[node.arguments[0]])
+            else:
+                println_ptr = gen_println(module, builder, ir, node.arguments[0])
+            builder.call(puts_func, [println_ptr])
+        elif node.node_type == ASTNodeType.LET:
+            print("Let Node: " + str(node.arguments))
+            gen_let(module, builder, ir, node.arguments[0], node.arguments[1])
         else:
             raise Exception("Unknown AST node type")
 
@@ -110,14 +146,14 @@ def codegen(ast):
     #println_ptr = gen_println(module, builder, ir, "Hello, world!")
 
     # Declare the puts function from the C standard library
-    puts_func_type = ir.FunctionType(ir.IntType(32), [ir.PointerType(ir.IntType(8))], var_arg=False)
-    puts_func = ir.Function(module, puts_func_type, name="puts")
+    # puts_func_type = ir.FunctionType(ir.IntType(32), [ir.PointerType(ir.IntType(8))], var_arg=False)
+    # puts_func = ir.Function(module, puts_func_type, name="puts")
     # Call the puts function
 
-    print("fn_ptrs: " + str(fn_ptrs))
-    for fn in fn_ptrs:
-        print("Calling println")
-        builder.call(puts_func, [fn])
+    #print("fn_ptrs: " + str(fn_ptrs))
+    #for fn in fn_ptrs:
+    #    print("Calling println")
+    #    builder.call(puts_func, [fn])
 
     # Return 0 from main
     builder.ret(ir.Constant(ir.IntType(32), 0))
@@ -166,6 +202,10 @@ if __name__ == "__main__":
             print("Parsed println")
             print(parsed[i][1])
             ast.children.append(ASTNode(ASTNodeType.PRINTLN, [parsed[i][1]]))
+        if parsed[i][0] == "LET":
+            print("Parsed let")
+            print(parsed[i][1:])
+            ast.children.append(ASTNode(ASTNodeType.LET, parsed[i][1:]))
 
     codegen(ast)
     #codegen(AST(ASTNodeType.MAIN, [ASTNode(ASTNodeType.PRINTLN, [parsed[1][1:-1]])]))

@@ -6,9 +6,9 @@ _tabversion = '3.10'
 
 _lr_method = 'LALR'
 
-_lr_signature = 'COLON EQUALS LET PRINTLN STRING SYMBOLstatements : statement\n                  | statements statementstatement : PRINTLN COLON STRINGstatement : LET SYMBOL EQUALS STRING'
+_lr_signature = 'COLON EQUALS LET PRINTLN STRING SYMBOLstatements : statement\n                  | statements statementexpression : STRINGexpression : SYMBOLstatement : PRINTLN COLON expressionstatement : LET SYMBOL EQUALS STRING'
     
-_lr_action_items = {'PRINTLN':([0,1,2,5,8,10,],[3,3,-1,-2,-3,-4,]),'LET':([0,1,2,5,8,10,],[4,4,-1,-2,-3,-4,]),'$end':([1,2,5,8,10,],[0,-1,-2,-3,-4,]),'COLON':([3,],[6,]),'SYMBOL':([4,],[7,]),'STRING':([6,9,],[8,10,]),'EQUALS':([7,],[9,]),}
+_lr_action_items = {'PRINTLN':([0,1,2,5,8,9,10,12,],[3,3,-1,-2,-5,-3,-4,-6,]),'LET':([0,1,2,5,8,9,10,12,],[4,4,-1,-2,-5,-3,-4,-6,]),'$end':([1,2,5,8,9,10,12,],[0,-1,-2,-5,-3,-4,-6,]),'COLON':([3,],[6,]),'SYMBOL':([4,6,],[7,10,]),'STRING':([6,11,],[9,12,]),'EQUALS':([7,],[11,]),}
 
 _lr_action = {}
 for _k, _v in _lr_action_items.items():
@@ -17,7 +17,7 @@ for _k, _v in _lr_action_items.items():
       _lr_action[_x][_k] = _y
 del _lr_action_items
 
-_lr_goto_items = {'statements':([0,],[1,]),'statement':([0,1,],[2,5,]),}
+_lr_goto_items = {'statements':([0,],[1,]),'statement':([0,1,],[2,5,]),'expression':([6,],[8,]),}
 
 _lr_goto = {}
 for _k, _v in _lr_goto_items.items():
@@ -29,6 +29,8 @@ _lr_productions = [
   ("S' -> statements","S'",1,None,None,None),
   ('statements -> statement','statements',1,'p_statements','parser.py',15),
   ('statements -> statements statement','statements',2,'p_statements','parser.py',16),
-  ('statement -> PRINTLN COLON STRING','statement',3,'p_statement_println','parser.py',24),
-  ('statement -> LET SYMBOL EQUALS STRING','statement',4,'p_statement_let','parser.py',29),
+  ('expression -> STRING','expression',1,'p_expression_string','parser.py',23),
+  ('expression -> SYMBOL','expression',1,'p_expression_symbol','parser.py',27),
+  ('statement -> PRINTLN COLON expression','statement',3,'p_statement_println','parser.py',31),
+  ('statement -> LET SYMBOL EQUALS STRING','statement',4,'p_statement_let','parser.py',36),
 ]
