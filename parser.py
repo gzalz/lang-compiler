@@ -4,10 +4,11 @@ import ply.yacc as yacc
 tokens = (
     'PRINTLN',
     'LET',
-    'COLON',
+    'EQUALS',
+    'LPAREN',
+    'RPAREN',
     'STRING',
     'SYMBOL',
-    'EQUALS'
 )
 
 # Grammar rules and handler functions
@@ -28,12 +29,12 @@ def p_expression_symbol(p):
     p[0] = p[1]
 
 def p_statement_println(p):
-    'statement : PRINTLN COLON expression'
+    'statement : PRINTLN LPAREN expression RPAREN'
     print(f'println statement found at line {p.lineno(1)}: {p[3]}')
     p[0] = ('PRINTLN', p[3])
 
 def p_statement_let(p):
-    'statement : LET SYMBOL EQUALS STRING'
+    'statement : LET SYMBOL EQUALS expression'
     print(f'let statement found at line {p.lineno(1)}: {p[2]} = {p[4]}')
     p[0] = ('LET', p[2], p[4])
 
@@ -44,4 +45,7 @@ def p_error(p):
     else:
         print("Syntax error at EOF")
         exit(2)
+
+# Build the parser
+parser = yacc.yacc()
 

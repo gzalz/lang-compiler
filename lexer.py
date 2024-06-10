@@ -8,6 +8,8 @@ tokens = (
     'STRING',
     'SYMBOL',
     'EQUALS',
+    'LPAREN',
+    'RPAREN',
 )
 
 t_ignore = ' \t'
@@ -34,6 +36,16 @@ def t_LET(t):
 
 def t_COLON(t):
     r':'
+    t.lineno = t.lexer.lineno
+    return t
+
+def t_LPAREN(t):
+    r'\('
+    t.lineno = t.lexer.lineno
+    return t
+
+def t_RPAREN(t):
+    r'\)'
     t.lineno = t.lexer.lineno
     return t
 

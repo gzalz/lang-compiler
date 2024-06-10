@@ -6,9 +6,9 @@ _tabversion = '3.10'
 
 _lr_method = 'LALR'
 
-_lr_signature = 'COLON EQUALS LET PRINTLN STRING SYMBOLstatements : statement\n                  | statements statementexpression : STRINGexpression : SYMBOLstatement : PRINTLN COLON expressionstatement : LET SYMBOL EQUALS STRING'
+_lr_signature = 'EQUALS LET LPAREN PRINTLN RPAREN STRING SYMBOLstatements : statement\n                  | statements statementexpression : STRINGexpression : SYMBOLstatement : PRINTLN LPAREN expression RPARENstatement : LET SYMBOL EQUALS expression'
     
-_lr_action_items = {'PRINTLN':([0,1,2,5,8,9,10,12,],[3,3,-1,-2,-5,-3,-4,-6,]),'LET':([0,1,2,5,8,9,10,12,],[4,4,-1,-2,-5,-3,-4,-6,]),'$end':([1,2,5,8,9,10,12,],[0,-1,-2,-5,-3,-4,-6,]),'COLON':([3,],[6,]),'SYMBOL':([4,6,],[7,10,]),'STRING':([6,11,],[9,12,]),'EQUALS':([7,],[11,]),}
+_lr_action_items = {'PRINTLN':([0,1,2,5,9,10,12,13,],[3,3,-1,-2,-3,-4,-5,-6,]),'LET':([0,1,2,5,9,10,12,13,],[4,4,-1,-2,-3,-4,-5,-6,]),'$end':([1,2,5,9,10,12,13,],[0,-1,-2,-3,-4,-5,-6,]),'LPAREN':([3,],[6,]),'SYMBOL':([4,6,11,],[7,10,10,]),'STRING':([6,11,],[9,9,]),'EQUALS':([7,],[11,]),'RPAREN':([8,9,10,],[12,-3,-4,]),}
 
 _lr_action = {}
 for _k, _v in _lr_action_items.items():
@@ -17,7 +17,7 @@ for _k, _v in _lr_action_items.items():
       _lr_action[_x][_k] = _y
 del _lr_action_items
 
-_lr_goto_items = {'statements':([0,],[1,]),'statement':([0,1,],[2,5,]),'expression':([6,],[8,]),}
+_lr_goto_items = {'statements':([0,],[1,]),'statement':([0,1,],[2,5,]),'expression':([6,11,],[8,13,]),}
 
 _lr_goto = {}
 for _k, _v in _lr_goto_items.items():
@@ -27,10 +27,10 @@ for _k, _v in _lr_goto_items.items():
 del _lr_goto_items
 _lr_productions = [
   ("S' -> statements","S'",1,None,None,None),
-  ('statements -> statement','statements',1,'p_statements','parser.py',15),
-  ('statements -> statements statement','statements',2,'p_statements','parser.py',16),
-  ('expression -> STRING','expression',1,'p_expression_string','parser.py',23),
-  ('expression -> SYMBOL','expression',1,'p_expression_symbol','parser.py',27),
-  ('statement -> PRINTLN COLON expression','statement',3,'p_statement_println','parser.py',31),
-  ('statement -> LET SYMBOL EQUALS STRING','statement',4,'p_statement_let','parser.py',36),
+  ('statements -> statement','statements',1,'p_statements','parser.py',16),
+  ('statements -> statements statement','statements',2,'p_statements','parser.py',17),
+  ('expression -> STRING','expression',1,'p_expression_string','parser.py',24),
+  ('expression -> SYMBOL','expression',1,'p_expression_symbol','parser.py',28),
+  ('statement -> PRINTLN LPAREN expression RPAREN','statement',4,'p_statement_println','parser.py',32),
+  ('statement -> LET SYMBOL EQUALS expression','statement',4,'p_statement_let','parser.py',37),
 ]
