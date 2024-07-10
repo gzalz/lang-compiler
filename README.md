@@ -1,4 +1,4 @@
-# Lang: Toy Programming Language
+# lang-compiler: Toy Programming Language
 See code.lng for an example program.
 
 ## Expressions
