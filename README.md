@@ -1,4 +1,4 @@
-# lang-compiler: Toy Programming Language
+# lang-compiler: Hobby Programming Language Compiler
 See code.lng for an example program.
 
 ## Expressions
