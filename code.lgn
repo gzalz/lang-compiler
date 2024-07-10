@@ -1,2 +1,0 @@
-let var = "bar"
-println("foo")

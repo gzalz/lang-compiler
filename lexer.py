@@ -10,6 +10,7 @@ tokens = (
     'EQUALS',
     'LPAREN',
     'RPAREN',
+    'NUMBER',
 )
 
 t_ignore = ' \t'
@@ -25,7 +26,7 @@ def t_error(t):
 
 # Track line numbers in tokens
 def t_PRINTLN(t):
-    r'println'
+    r'print'
     t.lineno = t.lexer.lineno
     return t
 
@@ -64,3 +65,8 @@ def t_SYMBOL(t):
     t.lineno = t.lexer.lineno
     return t
 
+def t_NUMBER(t):
+    r'\d+'
+    t.value = int(t.value)
+    t.lineno = t.lexer.lineno
+    return t

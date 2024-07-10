@@ -1,0 +1,10 @@
+let fin: str = "\tfin\n"
+let shouldnt_be_a_u8: u8 = 256
+let int: u8 = 42
+print("\tfoo\n")
+print("\tbar\n")
+print("\t")
+print(int)
+print("\n")
+print(fin)
+

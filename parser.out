@@ -7,23 +7,26 @@ Rule 1     statements -> statement
 Rule 2     statements -> statements statement
 Rule 3     expression -> STRING
 Rule 4     expression -> SYMBOL
-Rule 5     statement -> PRINTLN LPAREN expression RPAREN
-Rule 6     statement -> LET SYMBOL EQUALS expression
+Rule 5     expression -> NUMBER
+Rule 6     statement -> PRINTLN LPAREN expression RPAREN
+Rule 7     statement -> LET SYMBOL COLON SYMBOL EQUALS expression
 
 Terminals, with rules where they appear
 
-EQUALS               : 6
-LET                  : 6
-LPAREN               : 5
-PRINTLN              : 5
-RPAREN               : 5
+COLON                : 7
+EQUALS               : 7
+LET                  : 7
+LPAREN               : 6
+NUMBER               : 5
+PRINTLN              : 6
+RPAREN               : 6
 STRING               : 3
-SYMBOL               : 4 6
+SYMBOL               : 4 7 7
 error                : 
 
 Nonterminals, with rules where they appear
 
-expression           : 5 6
+expression           : 6 7
 statement            : 1 2
 statements           : 2 0
 
@@ -34,8 +37,8 @@ state 0
     (0) S' -> . statements
     (1) statements -> . statement
     (2) statements -> . statements statement
-    (5) statement -> . PRINTLN LPAREN expression RPAREN
-    (6) statement -> . LET SYMBOL EQUALS expression
+    (6) statement -> . PRINTLN LPAREN expression RPAREN
+    (7) statement -> . LET SYMBOL COLON SYMBOL EQUALS expression
 
     PRINTLN         shift and go to state 3
     LET             shift and go to state 4
@@ -47,8 +50,8 @@ state 1
 
     (0) S' -> statements .
     (2) statements -> statements . statement
-    (5) statement -> . PRINTLN LPAREN expression RPAREN
-    (6) statement -> . LET SYMBOL EQUALS expression
+    (6) statement -> . PRINTLN LPAREN expression RPAREN
+    (7) statement -> . LET SYMBOL COLON SYMBOL EQUALS expression
 
     PRINTLN         shift and go to state 3
     LET             shift and go to state 4
@@ -66,14 +69,14 @@ state 2
 
 state 3
 
-    (5) statement -> PRINTLN . LPAREN expression RPAREN
+    (6) statement -> PRINTLN . LPAREN expression RPAREN
 
     LPAREN          shift and go to state 6
 
 
 state 4
 
-    (6) statement -> LET . SYMBOL EQUALS expression
+    (7) statement -> LET . SYMBOL COLON SYMBOL EQUALS expression
 
     SYMBOL          shift and go to state 7
 
@@ -89,27 +92,29 @@ state 5
 
 state 6
 
-    (5) statement -> PRINTLN LPAREN . expression RPAREN
+    (6) statement -> PRINTLN LPAREN . expression RPAREN
     (3) expression -> . STRING
     (4) expression -> . SYMBOL
+    (5) expression -> . NUMBER
 
     STRING          shift and go to state 9
     SYMBOL          shift and go to state 10
+    NUMBER          shift and go to state 11
 
     expression                     shift and go to state 8
 
 state 7
 
-    (6) statement -> LET SYMBOL . EQUALS expression
+    (7) statement -> LET SYMBOL . COLON SYMBOL EQUALS expression
 
-    EQUALS          shift and go to state 11
+    COLON           shift and go to state 12
 
 
 state 8
 
-    (5) statement -> PRINTLN LPAREN expression . RPAREN
+    (6) statement -> PRINTLN LPAREN expression . RPAREN
 
-    RPAREN          shift and go to state 12
+    RPAREN          shift and go to state 13
 
 
 state 9
@@ -134,29 +139,55 @@ state 10
 
 state 11
 
-    (6) statement -> LET SYMBOL EQUALS . expression
-    (3) expression -> . STRING
-    (4) expression -> . SYMBOL
+    (5) expression -> NUMBER .
 
-    STRING          shift and go to state 9
-    SYMBOL          shift and go to state 10
+    RPAREN          reduce using rule 5 (expression -> NUMBER .)
+    PRINTLN         reduce using rule 5 (expression -> NUMBER .)
+    LET             reduce using rule 5 (expression -> NUMBER .)
+    $end            reduce using rule 5 (expression -> NUMBER .)
 
-    expression                     shift and go to state 13
 
 state 12
 
-    (5) statement -> PRINTLN LPAREN expression RPAREN .
+    (7) statement -> LET SYMBOL COLON . SYMBOL EQUALS expression
 
-    PRINTLN         reduce using rule 5 (statement -> PRINTLN LPAREN expression RPAREN .)
-    LET             reduce using rule 5 (statement -> PRINTLN LPAREN expression RPAREN .)
-    $end            reduce using rule 5 (statement -> PRINTLN LPAREN expression RPAREN .)
+    SYMBOL          shift and go to state 14
 
 
 state 13
 
-    (6) statement -> LET SYMBOL EQUALS expression .
+    (6) statement -> PRINTLN LPAREN expression RPAREN .
 
-    PRINTLN         reduce using rule 6 (statement -> LET SYMBOL EQUALS expression .)
-    LET             reduce using rule 6 (statement -> LET SYMBOL EQUALS expression .)
-    $end            reduce using rule 6 (statement -> LET SYMBOL EQUALS expression .)
+    PRINTLN         reduce using rule 6 (statement -> PRINTLN LPAREN expression RPAREN .)
+    LET             reduce using rule 6 (statement -> PRINTLN LPAREN expression RPAREN .)
+    $end            reduce using rule 6 (statement -> PRINTLN LPAREN expression RPAREN .)
+
+
+state 14
+
+    (7) statement -> LET SYMBOL COLON SYMBOL . EQUALS expression
+
+    EQUALS          shift and go to state 15
+
+
+state 15
+
+    (7) statement -> LET SYMBOL COLON SYMBOL EQUALS . expression
+    (3) expression -> . STRING
+    (4) expression -> . SYMBOL
+    (5) expression -> . NUMBER
+
+    STRING          shift and go to state 9
+    SYMBOL          shift and go to state 10
+    NUMBER          shift and go to state 11
+
+    expression                     shift and go to state 16
+
+state 16
+
+    (7) statement -> LET SYMBOL COLON SYMBOL EQUALS expression .
+
+    PRINTLN         reduce using rule 7 (statement -> LET SYMBOL COLON SYMBOL EQUALS expression .)
+    LET             reduce using rule 7 (statement -> LET SYMBOL COLON SYMBOL EQUALS expression .)
+    $end            reduce using rule 7 (statement -> LET SYMBOL COLON SYMBOL EQUALS expression .)
 

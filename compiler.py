@@ -78,11 +78,11 @@ def gen_string(module, builder, ir, value):
     global GID
     string_type = module.context.get_identified_type('String')
     name = f"str_{GID}"
-    
+  
     if value[0] == '"':
-        string_value = value[1:-1]
+        string_value = value[1:-1].encode('utf-8').decode('unicode_escape')  # Interpret escape sequences like \n
         length = len(string_value)
-        capacity = length  # No null terminator needed
+        capacity = length
 
         # Create global string value
         str_global = ir.GlobalVariable(module, ir.ArrayType(ir.IntType(8), capacity), name)
@@ -105,15 +105,30 @@ def gen_string(module, builder, ir, value):
         var_ptr = GLOBAL_SCOPE[value]
         return var_ptr
 
+def gen_u8(module, builder, ir, value):
+    global GID
+    name = f"u8_{GID}"
+    
+    u8_value = int(value)
+    u8_global = ir.GlobalVariable(module, ir.IntType(8), name)
+    u8_global.initializer = ir.Constant(ir.IntType(8), u8_value)
+    u8_global.global_constant = True
+
+    u8_var = builder.alloca(ir.IntType(8), name=name)
+    builder.store(ir.Constant(ir.IntType(8), u8_value), u8_var)
+
+    GID += 1
+    return u8_var
+
 def create_println_function(module):
-    # Define the printf function type
-    printf_ty = ir.FunctionType(ir.IntType(32), [ir.PointerType(ir.IntType(8))], var_arg=True)
-    printf = ir.Function(module, printf_ty, name="printf")
+    # Define the 'write' syscall function type
+    write_ty = ir.FunctionType(ir.IntType(64), [ir.IntType(64), ir.PointerType(ir.IntType(8)), ir.IntType(32)], var_arg=False)
+    write_func = ir.Function(module, write_ty, name="write")
 
     # Define the println function type
     string_type = module.context.get_identified_type('String')
     println_ty = ir.FunctionType(ir.VoidType(), [string_type.as_pointer()])
-    println = ir.Function(module, println_ty, name="println")
+    println = ir.Function(module, println_ty, name="print")
 
     # Create the function body
     block = println.append_basic_block(name="entry")
@@ -122,9 +137,13 @@ def create_println_function(module):
     # Extract the string struct fields
     str_ptr = println.args[0]
     data_ptr = builder.load(builder.gep(str_ptr, [ir.IntType(32)(0), ir.IntType(32)(0)], inbounds=True))
+    length = builder.load(builder.gep(str_ptr, [ir.IntType(32)(0), ir.IntType(32)(2)], inbounds=True))
 
-    # Call printf to print the string
-    builder.call(printf, [data_ptr])
+    # File descriptor 1 (stdout)
+    fd = ir.Constant(ir.IntType(64), 1)
+
+    # Call the 'write' syscall
+    builder.call(write_func, [fd, data_ptr, length])
 
     # Return void
     builder.ret_void()
@@ -150,16 +169,24 @@ def codegen(ast):
         elif node.node_type == ASTNodeType.PRINTLN:
             print("Println Args: " + str(node.arguments))
             if not node.arguments[0][0] == "\"":
-                arg_ptr = gen_string(module, builder, ir, GLOBAL_SCOPE[node.arguments[0]])
+                print("[printvar-globalscope-dump] " + str(GLOBAL_SCOPE))
+                if isinstance(GLOBAL_SCOPE[node.arguments[0]], int):
+                    arg_ptr = gen_string(module, builder, ir, "\"%d\""%GLOBAL_SCOPE[node.arguments[0]])
+                else:
+                    arg_ptr = gen_string(module, builder, ir, GLOBAL_SCOPE[node.arguments[0]])
             else:
                 arg_ptr = gen_string(module, builder, ir, node.arguments[0])
             print("Arg Ptr: " + str(type(arg_ptr)))
-            builder.call(module.get_global('println'), [arg_ptr])
+            builder.call(module.get_global('print'), [arg_ptr])
         elif node.node_type == ASTNodeType.LET:
-            print("Let Args: " + str(node.arguments))
             var_name = node.arguments[0]
-            var_value = node.arguments[1]
-            var_struct = gen_string(module, builder, ir, var_value)
+            var_type = node.arguments[1]
+            var_value = node.arguments[2]
+            print("Let Args: " + str(node.arguments))
+            if var_type == "u8":
+                var_struct = gen_u8(module, builder, ir, var_value)
+            if var_type == "str":
+                var_struct = gen_string(module, builder, ir, var_value)
             GLOBAL_SCOPE[var_name] = var_value
         else:
             raise Exception("Unknown AST node type")
@@ -167,7 +194,7 @@ def codegen(ast):
     builder.ret(ir.Constant(ir.IntType(32), 0))
 
     # Write the LLVM IR to a file
-    llvm_ir_filename = "hello_world.ll"
+    llvm_ir_filename = "main.ll"
     with open(llvm_ir_filename, "w") as f:
         f.write(str(module))
 
@@ -185,12 +212,12 @@ def codegen(ast):
     mod = binding.parse_assembly(llvm_ir)
     mod.verify()
 
-    object_filename = "hello_world.o"
+    object_filename = "main.o"
     with open(object_filename, "wb") as f:
         f.write(target_machine.emit_object(mod))
 
     # Link the object file to create an executable with the correct flags
-    executable_filename = "hello_world"
+    executable_filename = "main"
     os.system(f"gcc -no-pie {object_filename} -o {executable_filename}")
 
     print(f"Compiled '{executable_filename}' successfully.")

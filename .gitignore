@@ -2,3 +2,4 @@
 *.o
 *.ll
 __pycache__/
+main
