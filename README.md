@@ -3,6 +3,7 @@ See code.lng for an example program.
 
 ## Expressions
 `let {name}: {type} = expression`
+
 `print(expression)`
 
 Variable names can be alphanumeric.
