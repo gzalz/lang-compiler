@@ -42,7 +42,6 @@ class ASTNode:
     def __init__(self, node_type, arguments):
         self.node_type = node_type
         self.arguments = arguments
-    
 
 class ASTNodeType(Enum):
     MAIN = 1
@@ -69,8 +68,8 @@ def create_string_struct(module):
     string_type = ir.global_context.get_identified_type('String')
     string_type.set_body(
         ir.PointerType(ir.IntType(8)),  # Pointer to the data
-        ir.IntType(32),                 # Capacity
-        ir.IntType(32)                  # Length
+        ir.IntType(64),                 # Capacity
+        ir.IntType(64)                  # Length
     )
     return string_type
 
@@ -82,19 +81,19 @@ def gen_string(module, builder, ir, value):
     if value[0] == '"':
         string_value = value[1:-1]
         length = len(string_value)
-        capacity = length  # No null terminator needed
+        capacity = length + 1  # Adding space for null terminator
 
         # Create global string value
         str_global = ir.GlobalVariable(module, ir.ArrayType(ir.IntType(8), capacity), name)
-        str_global.initializer = ir.Constant(ir.ArrayType(ir.IntType(8), capacity), bytearray(string_value.encode('utf8')))
+        str_global.initializer = ir.Constant(ir.ArrayType(ir.IntType(8), capacity), bytearray((string_value + '\0').encode('utf8')))
         str_global.global_constant = True
 
         # Create a local string struct
         str_struct = builder.alloca(string_type, name=name)
         data_ptr = builder.gep(str_global, [ir.IntType(32)(0), ir.IntType(32)(0)], inbounds=True)
         builder.store(data_ptr, builder.gep(str_struct, [ir.IntType(32)(0), ir.IntType(32)(0)]))
-        builder.store(ir.IntType(32)(capacity), builder.gep(str_struct, [ir.IntType(32)(0), ir.IntType(32)(1)]))
-        builder.store(ir.IntType(32)(length), builder.gep(str_struct, [ir.IntType(32)(0), ir.IntType(32)(2)]))
+        builder.store(ir.IntType(64)(capacity), builder.gep(str_struct, [ir.IntType(32)(0), ir.IntType(32)(1)]))
+        builder.store(ir.IntType(64)(length), builder.gep(str_struct, [ir.IntType(32)(0), ir.IntType(32)(2)]))
 
         GID += 1
         return str_struct
@@ -102,8 +101,7 @@ def gen_string(module, builder, ir, value):
         # Handle variable lookup
         if value not in GLOBAL_SCOPE:
             raise Exception(f"Undefined variable: {value}")
-        var_ptr = GLOBAL_SCOPE[value]
-        return var_ptr
+        return GLOBAL_SCOPE[value]
 
 def create_println_function(module):
     # Define the printf function type
@@ -134,10 +132,9 @@ def codegen(ast):
     module = ir.Module(name="helloworld")
     string_type = create_string_struct(module)
     create_println_function(module)
-    println_ptr = None
 
     builder = None
-    puts_func = None
+    fn_ptrs = []
     ast_iter = ASTIterator(ast)
     while ast_iter is not None:
         node = ast_iter.next()
@@ -149,10 +146,10 @@ def codegen(ast):
             builder = bldr
         elif node.node_type == ASTNodeType.PRINTLN:
             print("Println Args: " + str(node.arguments))
-            if not node.arguments[0][0] == "\"":
-                arg_ptr = gen_string(module, builder, ir, GLOBAL_SCOPE[node.arguments[0]])
-            else:
+            if node.arguments[0][0] == "\"":
                 arg_ptr = gen_string(module, builder, ir, node.arguments[0])
+            else:
+                arg_ptr = GLOBAL_SCOPE[node.arguments[0]]
             print("Arg Ptr: " + str(type(arg_ptr)))
             builder.call(module.get_global('println'), [arg_ptr])
         elif node.node_type == ASTNodeType.LET:
@@ -160,7 +157,7 @@ def codegen(ast):
             var_name = node.arguments[0]
             var_value = node.arguments[1]
             var_struct = gen_string(module, builder, ir, var_value)
-            GLOBAL_SCOPE[var_name] = var_value
+            GLOBAL_SCOPE[var_name] = var_struct
         else:
             raise Exception("Unknown AST node type")
 

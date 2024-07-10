@@ -1,3 +1,2 @@
 let var = "bar"
 println("foo")
-println(var)
