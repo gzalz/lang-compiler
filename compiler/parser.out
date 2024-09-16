@@ -1,0 +1,193 @@
+Created by PLY version 3.11 (http://www.dabeaz.com/ply)
+
+Grammar
+
+Rule 0     S' -> statements
+Rule 1     statements -> statement
+Rule 2     statements -> statements statement
+Rule 3     expression -> STRING
+Rule 4     expression -> SYMBOL
+Rule 5     expression -> NUMBER
+Rule 6     statement -> PRINTLN LPAREN expression RPAREN
+Rule 7     statement -> LET SYMBOL COLON SYMBOL EQUALS expression
+
+Terminals, with rules where they appear
+
+COLON                : 7
+EQUALS               : 7
+LET                  : 7
+LPAREN               : 6
+NUMBER               : 5
+PRINTLN              : 6
+RPAREN               : 6
+STRING               : 3
+SYMBOL               : 4 7 7
+error                : 
+
+Nonterminals, with rules where they appear
+
+expression           : 6 7
+statement            : 1 2
+statements           : 2 0
+
+Parsing method: LALR
+
+state 0
+
+    (0) S' -> . statements
+    (1) statements -> . statement
+    (2) statements -> . statements statement
+    (6) statement -> . PRINTLN LPAREN expression RPAREN
+    (7) statement -> . LET SYMBOL COLON SYMBOL EQUALS expression
+
+    PRINTLN         shift and go to state 3
+    LET             shift and go to state 4
+
+    statements                     shift and go to state 1
+    statement                      shift and go to state 2
+
+state 1
+
+    (0) S' -> statements .
+    (2) statements -> statements . statement
+    (6) statement -> . PRINTLN LPAREN expression RPAREN
+    (7) statement -> . LET SYMBOL COLON SYMBOL EQUALS expression
+
+    PRINTLN         shift and go to state 3
+    LET             shift and go to state 4
+
+    statement                      shift and go to state 5
+
+state 2
+
+    (1) statements -> statement .
+
+    PRINTLN         reduce using rule 1 (statements -> statement .)
+    LET             reduce using rule 1 (statements -> statement .)
+    $end            reduce using rule 1 (statements -> statement .)
+
+
+state 3
+
+    (6) statement -> PRINTLN . LPAREN expression RPAREN
+
+    LPAREN          shift and go to state 6
+
+
+state 4
+
+    (7) statement -> LET . SYMBOL COLON SYMBOL EQUALS expression
+
+    SYMBOL          shift and go to state 7
+
+
+state 5
+
+    (2) statements -> statements statement .
+
+    PRINTLN         reduce using rule 2 (statements -> statements statement .)
+    LET             reduce using rule 2 (statements -> statements statement .)
+    $end            reduce using rule 2 (statements -> statements statement .)
+
+
+state 6
+
+    (6) statement -> PRINTLN LPAREN . expression RPAREN
+    (3) expression -> . STRING
+    (4) expression -> . SYMBOL
+    (5) expression -> . NUMBER
+
+    STRING          shift and go to state 9
+    SYMBOL          shift and go to state 10
+    NUMBER          shift and go to state 11
+
+    expression                     shift and go to state 8
+
+state 7
+
+    (7) statement -> LET SYMBOL . COLON SYMBOL EQUALS expression
+
+    COLON           shift and go to state 12
+
+
+state 8
+
+    (6) statement -> PRINTLN LPAREN expression . RPAREN
+
+    RPAREN          shift and go to state 13
+
+
+state 9
+
+    (3) expression -> STRING .
+
+    RPAREN          reduce using rule 3 (expression -> STRING .)
+    PRINTLN         reduce using rule 3 (expression -> STRING .)
+    LET             reduce using rule 3 (expression -> STRING .)
+    $end            reduce using rule 3 (expression -> STRING .)
+
+
+state 10
+
+    (4) expression -> SYMBOL .
+
+    RPAREN          reduce using rule 4 (expression -> SYMBOL .)
+    PRINTLN         reduce using rule 4 (expression -> SYMBOL .)
+    LET             reduce using rule 4 (expression -> SYMBOL .)
+    $end            reduce using rule 4 (expression -> SYMBOL .)
+
+
+state 11
+
+    (5) expression -> NUMBER .
+
+    RPAREN          reduce using rule 5 (expression -> NUMBER .)
+    PRINTLN         reduce using rule 5 (expression -> NUMBER .)
+    LET             reduce using rule 5 (expression -> NUMBER .)
+    $end            reduce using rule 5 (expression -> NUMBER .)
+
+
+state 12
+
+    (7) statement -> LET SYMBOL COLON . SYMBOL EQUALS expression
+
+    SYMBOL          shift and go to state 14
+
+
+state 13
+
+    (6) statement -> PRINTLN LPAREN expression RPAREN .
+
+    PRINTLN         reduce using rule 6 (statement -> PRINTLN LPAREN expression RPAREN .)
+    LET             reduce using rule 6 (statement -> PRINTLN LPAREN expression RPAREN .)
+    $end            reduce using rule 6 (statement -> PRINTLN LPAREN expression RPAREN .)
+
+
+state 14
+
+    (7) statement -> LET SYMBOL COLON SYMBOL . EQUALS expression
+
+    EQUALS          shift and go to state 15
+
+
+state 15
+
+    (7) statement -> LET SYMBOL COLON SYMBOL EQUALS . expression
+    (3) expression -> . STRING
+    (4) expression -> . SYMBOL
+    (5) expression -> . NUMBER
+
+    STRING          shift and go to state 9
+    SYMBOL          shift and go to state 10
+    NUMBER          shift and go to state 11
+
+    expression                     shift and go to state 16
+
+state 16
+
+    (7) statement -> LET SYMBOL COLON SYMBOL EQUALS expression .
+
+    PRINTLN         reduce using rule 7 (statement -> LET SYMBOL COLON SYMBOL EQUALS expression .)
+    LET             reduce using rule 7 (statement -> LET SYMBOL COLON SYMBOL EQUALS expression .)
+    $end            reduce using rule 7 (statement -> LET SYMBOL COLON SYMBOL EQUALS expression .)
+
