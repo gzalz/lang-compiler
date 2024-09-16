@@ -2,71 +2,82 @@ import ply.lex as lex
 
 # Lexer definition
 tokens = (
-    'PRINTLN',
-    'LET',
-    'COLON',
-    'STRING',
-    'SYMBOL',
-    'EQUALS',
-    'LPAREN',
-    'RPAREN',
-    'NUMBER',
+    "PRINTLN",
+    "LET",
+    "COLON",
+    "STRING",
+    "SYMBOL",
+    "EQUALS",
+    "LPAREN",
+    "RPAREN",
+    "NUMBER",
 )
 
-t_ignore = ' \t'
+t_ignore = " \t"
+
 
 def t_newline(t):
-    r'\n+'
+    r"\n+"
     t.lexer.lineno += len(t.value)
+
 
 def t_error(t):
     print(f"Illegal character '{t.value[0]}' at line {t.lexer.lineno}")
     t.lexer.skip(1)
     exit(1)
 
+
 # Track line numbers in tokens
 def t_PRINTLN(t):
-    r'print'
+    r"print"
     t.lineno = t.lexer.lineno
     return t
+
 
 def t_LET(t):
-    r'let'
+    r"let"
     t.lineno = t.lexer.lineno
     return t
+
 
 def t_COLON(t):
-    r':'
+    r":"
     t.lineno = t.lexer.lineno
     return t
+
 
 def t_LPAREN(t):
-    r'\('
+    r"\("
     t.lineno = t.lexer.lineno
     return t
+
 
 def t_RPAREN(t):
-    r'\)'
+    r"\)"
     t.lineno = t.lexer.lineno
     return t
+
 
 def t_EQUALS(t):
-    r'='
+    r"="
     t.lineno = t.lexer.lineno
     return t
+
 
 def t_STRING(t):
-    r'\".*?\"'
+    r"\".*?\" "
     t.lineno = t.lexer.lineno
     return t
+
 
 def t_SYMBOL(t):
-    r'[a-zA-Z_][a-zA-Z0-9_]*'
+    r"[a-zA-Z_][a-zA-Z0-9_]*"
     t.lineno = t.lexer.lineno
     return t
 
+
 def t_NUMBER(t):
-    r'\d+'
+    r"\d+"
     t.value = int(t.value)
     t.lineno = t.lexer.lineno
     return t

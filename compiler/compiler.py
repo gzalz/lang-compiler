@@ -1,11 +1,11 @@
-from enum import Enum
-from llvmlite import ir, binding
-import sys
 import os
-from ply import lex
-from ply import yacc
-from lexer import *
+import sys
+from enum import Enum
 from parser import *
+
+from lexer import *
+from llvmlite import binding, ir
+from ply import lex, yacc
 
 GID = 0
 GLOBAL_SCOPE = {}
@@ -13,10 +13,12 @@ GLOBAL_SCOPE = {}
 lexer = lex.lex()
 parser = yacc.yacc()
 
+
 class AST:
     def __init__(self, node, children):
         self.node = node
         self.children = children
+
 
 class ASTIterator:
     def __init__(self, ast):
@@ -36,26 +38,32 @@ class ASTIterator:
             print("Current: " + str(self.ast.children[idx]))
             return self.ast.children[idx]
         else:
-            return None 
+            return None
+
 
 class ASTNode:
     def __init__(self, node_type, arguments):
         self.node_type = node_type
         self.arguments = arguments
-    
+
 
 class ASTNodeType(Enum):
     MAIN = 1
     LET = 2
     PRINTLN = 3
 
+
 def parse_input(input_string):
     result = parser.parse(input_string, lexer=lexer)
     return result
 
+
 def gen_main(module, ir):
     # Create a function signature: int (int, char**)
-    func_type = ir.FunctionType(ir.IntType(32), [ir.IntType(32), ir.PointerType(ir.PointerType(ir.IntType(8)))])
+    func_type = ir.FunctionType(
+        ir.IntType(32),
+        [ir.IntType(32), ir.PointerType(ir.PointerType(ir.IntType(8)))],
+    )
     main_func = ir.Function(module, func_type, name="main")
 
     # Create an entry block in the function
@@ -64,37 +72,57 @@ def gen_main(module, ir):
 
     return main_func, builder
 
+
 def create_string_struct(module):
     # Define a struct for strings with pointer, capacity, and length
-    string_type = ir.global_context.get_identified_type('String')
+    string_type = ir.global_context.get_identified_type("String")
     string_type.set_body(
         ir.PointerType(ir.IntType(8)),  # Pointer to the data
-        ir.IntType(32),                 # Capacity
-        ir.IntType(32)                  # Length
+        ir.IntType(32),  # Capacity
+        ir.IntType(32),  # Length
     )
     return string_type
 
+
 def gen_string(module, builder, ir, value):
     global GID
-    string_type = module.context.get_identified_type('String')
+    string_type = module.context.get_identified_type("String")
     name = f"str_{GID}"
-  
+
     if value[0] == '"':
-        string_value = value[1:-1].encode('utf-8').decode('unicode_escape')  # Interpret escape sequences like \n
+        string_value = (
+            value[1:-1].encode("utf-8").decode("unicode_escape")
+        )  # Interpret escape sequences like \n
         length = len(string_value)
         capacity = length
 
         # Create global string value
-        str_global = ir.GlobalVariable(module, ir.ArrayType(ir.IntType(8), capacity), name)
-        str_global.initializer = ir.Constant(ir.ArrayType(ir.IntType(8), capacity), bytearray(string_value.encode('utf8')))
+        str_global = ir.GlobalVariable(
+            module, ir.ArrayType(ir.IntType(8), capacity), name
+        )
+        str_global.initializer = ir.Constant(
+            ir.ArrayType(ir.IntType(8), capacity),
+            bytearray(string_value.encode("utf8")),
+        )
         str_global.global_constant = True
 
         # Create a local string struct
         str_struct = builder.alloca(string_type, name=name)
-        data_ptr = builder.gep(str_global, [ir.IntType(32)(0), ir.IntType(32)(0)], inbounds=True)
-        builder.store(data_ptr, builder.gep(str_struct, [ir.IntType(32)(0), ir.IntType(32)(0)]))
-        builder.store(ir.IntType(32)(capacity), builder.gep(str_struct, [ir.IntType(32)(0), ir.IntType(32)(1)]))
-        builder.store(ir.IntType(32)(length), builder.gep(str_struct, [ir.IntType(32)(0), ir.IntType(32)(2)]))
+        data_ptr = builder.gep(
+            str_global, [ir.IntType(32)(0), ir.IntType(32)(0)], inbounds=True
+        )
+        builder.store(
+            data_ptr,
+            builder.gep(str_struct, [ir.IntType(32)(0), ir.IntType(32)(0)]),
+        )
+        builder.store(
+            ir.IntType(32)(capacity),
+            builder.gep(str_struct, [ir.IntType(32)(0), ir.IntType(32)(1)]),
+        )
+        builder.store(
+            ir.IntType(32)(length),
+            builder.gep(str_struct, [ir.IntType(32)(0), ir.IntType(32)(2)]),
+        )
 
         GID += 1
         return str_struct
@@ -105,10 +133,11 @@ def gen_string(module, builder, ir, value):
         var_ptr = GLOBAL_SCOPE[value]
         return var_ptr
 
+
 def gen_u8(module, builder, ir, value):
     global GID
     name = f"u8_{GID}"
-    
+
     u8_value = int(value)
     u8_global = ir.GlobalVariable(module, ir.IntType(8), name)
     u8_global.initializer = ir.Constant(ir.IntType(8), u8_value)
@@ -120,13 +149,18 @@ def gen_u8(module, builder, ir, value):
     GID += 1
     return u8_var
 
+
 def create_println_function(module):
     # Define the 'write' syscall function type
-    write_ty = ir.FunctionType(ir.IntType(64), [ir.IntType(64), ir.PointerType(ir.IntType(8)), ir.IntType(32)], var_arg=False)
+    write_ty = ir.FunctionType(
+        ir.IntType(64),
+        [ir.IntType(64), ir.PointerType(ir.IntType(8)), ir.IntType(32)],
+        var_arg=False,
+    )
     write_func = ir.Function(module, write_ty, name="write")
 
     # Define the println function type
-    string_type = module.context.get_identified_type('String')
+    string_type = module.context.get_identified_type("String")
     println_ty = ir.FunctionType(ir.VoidType(), [string_type.as_pointer()])
     println = ir.Function(module, println_ty, name="print")
 
@@ -136,8 +170,16 @@ def create_println_function(module):
 
     # Extract the string struct fields
     str_ptr = println.args[0]
-    data_ptr = builder.load(builder.gep(str_ptr, [ir.IntType(32)(0), ir.IntType(32)(0)], inbounds=True))
-    length = builder.load(builder.gep(str_ptr, [ir.IntType(32)(0), ir.IntType(32)(2)], inbounds=True))
+    data_ptr = builder.load(
+        builder.gep(
+            str_ptr, [ir.IntType(32)(0), ir.IntType(32)(0)], inbounds=True
+        )
+    )
+    length = builder.load(
+        builder.gep(
+            str_ptr, [ir.IntType(32)(0), ir.IntType(32)(2)], inbounds=True
+        )
+    )
 
     # File descriptor 1 (stdout)
     fd = ir.Constant(ir.IntType(64), 1)
@@ -147,6 +189,7 @@ def create_println_function(module):
 
     # Return void
     builder.ret_void()
+
 
 def codegen(ast):
     # Create a new LLVM module
@@ -168,16 +211,23 @@ def codegen(ast):
             builder = bldr
         elif node.node_type == ASTNodeType.PRINTLN:
             print("Println Args: " + str(node.arguments))
-            if not node.arguments[0][0] == "\"":
+            if not node.arguments[0][0] == '"':
                 print("[printvar-globalscope-dump] " + str(GLOBAL_SCOPE))
                 if isinstance(GLOBAL_SCOPE[node.arguments[0]], int):
-                    arg_ptr = gen_string(module, builder, ir, "\"%d\""%GLOBAL_SCOPE[node.arguments[0]])
+                    arg_ptr = gen_string(
+                        module,
+                        builder,
+                        ir,
+                        '"%d"' % GLOBAL_SCOPE[node.arguments[0]],
+                    )
                 else:
-                    arg_ptr = gen_string(module, builder, ir, GLOBAL_SCOPE[node.arguments[0]])
+                    arg_ptr = gen_string(
+                        module, builder, ir, GLOBAL_SCOPE[node.arguments[0]]
+                    )
             else:
                 arg_ptr = gen_string(module, builder, ir, node.arguments[0])
             print("Arg Ptr: " + str(type(arg_ptr)))
-            builder.call(module.get_global('print'), [arg_ptr])
+            builder.call(module.get_global("print"), [arg_ptr])
         elif node.node_type == ASTNodeType.LET:
             var_name = node.arguments[0]
             var_type = node.arguments[1]
@@ -204,7 +254,7 @@ def codegen(ast):
     binding.initialize_native_asmprinter()  # Required for code generation
 
     target = binding.Target.from_default_triple()
-    target_machine = target.create_target_machine(reloc='pic')
+    target_machine = target.create_target_machine(reloc="pic")
 
     with open(llvm_ir_filename) as f:
         llvm_ir = f.read()
@@ -221,6 +271,7 @@ def codegen(ast):
     os.system(f"gcc -no-pie {object_filename} -o {executable_filename}")
 
     print(f"Compiled '{executable_filename}' successfully.")
+
 
 if __name__ == "__main__":
     code_path = sys.argv[1]
@@ -242,4 +293,3 @@ if __name__ == "__main__":
             ast.children.append(ASTNode(ASTNodeType.LET, stmt[1:]))
 
     codegen(ast)
-
