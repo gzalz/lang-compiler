@@ -234,6 +234,8 @@ def codegen(ast):
             var_value = node.arguments[2]
             print("Let Args: " + str(node.arguments))
             if var_type == "u8":
+                if var_value > 255 or var_value < 0:
+                    raise Exception("u8 value must be between 0 and 255")
                 var_struct = gen_u8(module, builder, ir, var_value)
             if var_type == "str":
                 var_struct = gen_string(module, builder, ir, var_value)
