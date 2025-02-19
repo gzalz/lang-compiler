@@ -13,7 +13,8 @@ tokens = (
     "SYMBOL",
     "NUMBER",
     "LBRACE",
-    "RBRACE"
+    "RBRACE",
+    "COMMENT"
 )
 
 
@@ -41,6 +42,10 @@ def p_expression_number(p):
     "expression : NUMBER"
     p[0] = p[1]
 
+def p_statement_comment(p):
+    "statement : COMMENT SYMBOL"
+    print(f"COMMENT statement found at line {p.lineno(1)}: {p[1]}")
+    p[0] = ("COMMENT", p[1])
 
 def p_statement_fn0_invoke(p):
     "statement : SYMBOL LPAREN RPAREN"

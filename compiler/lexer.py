@@ -13,7 +13,8 @@ tokens = (
     "RPAREN",
     "NUMBER",
     "LBRACE",
-    "RBRACE"
+    "RBRACE",
+    "COMMENT"
 )
 
 t_ignore = " \t"
@@ -29,6 +30,9 @@ def t_error(t):
     t.lexer.skip(1)
     exit(1)
 
+def t_COMMENT(t):
+    r'//[^\n]*'
+    pass  # Ignore comments
 
 # Track line numbers in tokens
 def t_PRINTLN(t):

@@ -3,6 +3,6 @@ fn secret_number() {
   print(byte)
   print("\n")
 }
-
 secret_number()
+// This should not compile
 print(byte)
