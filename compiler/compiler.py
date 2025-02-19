@@ -42,15 +42,20 @@ class ASTIterator:
 
 
 class ASTNode:
-    def __init__(self, node_type, arguments):
+    def __init__(self, node_type, arguments=[], expressions=[], children=[]):
         self.node_type = node_type
         self.arguments = arguments
+        self.expressions = expressions
+        self.children = children
 
 
 class ASTNodeType(Enum):
     MAIN = 1
     LET = 2
     PRINTLN = 3
+    END_FN = 4
+    FN0_VOID = 5
+    INVOKE0 = 6
 
 
 def parse_input(input_string):
@@ -165,7 +170,7 @@ def create_println_function(module):
     println = ir.Function(module, println_ty, name="print")
 
     # Create the function body
-    block = println.append_basic_block(name="entry")
+    block = println.append_basic_block(name="entry_println")
     builder = ir.IRBuilder(block)
 
     # Extract the string struct fields
@@ -190,6 +195,53 @@ def create_println_function(module):
     # Return void
     builder.ret_void()
 
+def create_function0_void(module, name):
+    fn_ty = ir.FunctionType(ir.VoidType(), [])
+    fn = ir.Function(module, fn_ty, name=name)
+
+    # Create the function body
+    block = fn.append_basic_block(name="entry_"+str(name))
+    builder = ir.IRBuilder(block)
+    end_fn_callback = lambda: builder.ret_void()
+    return builder, end_fn_callback
+
+def codegen_invoke0(name, module, builder, ir):
+    print(f"[codegen] invoke0: {name}")
+    builder.call(module.get_global(name), [])
+
+def codegen_println(node_arguments, module, builder, ir):
+    print("[codegen] println: " + str(node_arguments))
+    if not node_arguments[0][0] == '"':
+        print("[printvar-globalscope-dump] " + str(GLOBAL_SCOPE))
+        if isinstance(GLOBAL_SCOPE[node_arguments[0]], int):
+            arg_ptr = gen_string(
+                module,
+                builder,
+                ir,
+                '"%d"' % GLOBAL_SCOPE[node_arguments[0]],
+            )
+        else:
+            arg_ptr = gen_string(
+                module, builder, ir, GLOBAL_SCOPE[node_arguments[0]]
+            )
+    else:
+        arg_ptr = gen_string(module, builder, ir, node_arguments[0])
+    print("Arg Ptr: " + str(type(arg_ptr)))
+    builder.call(module.get_global("print"), [arg_ptr])
+
+def codegen_let(node_arguments, module, builder, ir):
+    print(f"[codegen] let: {node_arguments}")
+    var_name = node_arguments[0]
+    var_type = node_arguments[1]
+    var_value = node_arguments[2]
+    print("Let Args: " + str(node_arguments))
+    if var_type == "u8":
+        if var_value > 255 or var_value < 0:
+            raise Exception("u8 value must be between 0 and 255")
+        var_struct = gen_u8(module, builder, ir, var_value)
+    if var_type == "str":
+        var_struct = gen_string(module, builder, ir, var_value)
+    GLOBAL_SCOPE[var_name] = var_value
 
 def codegen(ast):
     # Create a new LLVM module
@@ -198,7 +250,9 @@ def codegen(ast):
     create_println_function(module)
     println_ptr = None
 
+    main_builder = None
     builder = None
+    end_fn_callback = None
     puts_func = None
     ast_iter = ASTIterator(ast)
     while ast_iter is not None:
@@ -209,37 +263,21 @@ def codegen(ast):
         if node.node_type == ASTNodeType.MAIN:
             main_func, bldr = gen_main(module, ir)
             builder = bldr
+            main_builder = bldr
         elif node.node_type == ASTNodeType.PRINTLN:
-            print("Println Args: " + str(node.arguments))
-            if not node.arguments[0][0] == '"':
-                print("[printvar-globalscope-dump] " + str(GLOBAL_SCOPE))
-                if isinstance(GLOBAL_SCOPE[node.arguments[0]], int):
-                    arg_ptr = gen_string(
-                        module,
-                        builder,
-                        ir,
-                        '"%d"' % GLOBAL_SCOPE[node.arguments[0]],
-                    )
-                else:
-                    arg_ptr = gen_string(
-                        module, builder, ir, GLOBAL_SCOPE[node.arguments[0]]
-                    )
-            else:
-                arg_ptr = gen_string(module, builder, ir, node.arguments[0])
-            print("Arg Ptr: " + str(type(arg_ptr)))
-            builder.call(module.get_global("print"), [arg_ptr])
+            codegen_println(node.arguments, module, builder, ir)    
         elif node.node_type == ASTNodeType.LET:
-            var_name = node.arguments[0]
-            var_type = node.arguments[1]
-            var_value = node.arguments[2]
-            print("Let Args: " + str(node.arguments))
-            if var_type == "u8":
-                if var_value > 255 or var_value < 0:
-                    raise Exception("u8 value must be between 0 and 255")
-                var_struct = gen_u8(module, builder, ir, var_value)
-            if var_type == "str":
-                var_struct = gen_string(module, builder, ir, var_value)
-            GLOBAL_SCOPE[var_name] = var_value
+            codegen_let(node.arguments, module, builder, ir) 
+        elif node.node_type == ASTNodeType.FN0_VOID:
+            fn_name = node.arguments[0]
+            builder, callback = create_function0_void(module, fn_name) 
+            end_fn_callback = callback
+            builder = builder
+        elif node.node_type == ASTNodeType.END_FN:
+            builder = main_builder
+            end_fn_callback()
+        elif node.node_type == ASTNodeType.INVOKE0:
+            codegen_invoke0(node.arguments[0], module, builder, ir)
         else:
             raise Exception("Unknown AST node type")
 
@@ -274,6 +312,19 @@ def codegen(ast):
 
     print(f"Compiled '{executable_filename}' successfully.")
 
+def build_node(stmt, ast):
+    if stmt[0] == "PRINTLN":
+        print("Adding println to AST")
+        print(stmt[1])
+        ast.children.append(ASTNode(ASTNodeType.PRINTLN, [stmt[1]]))
+    if stmt[0] == "LET":
+        print("Adding let to AST")
+        print(stmt[1:])
+        ast.children.append(ASTNode(ASTNodeType.LET, stmt[1:]))
+    if stmt[0] == "INVOKE":
+        print("Adding INVOKE0 to AST")
+        print(stmt[1:])
+        ast.children.append(ASTNode(ASTNodeType.INVOKE0, stmt[1:]))
 
 if __name__ == "__main__":
     code_path = sys.argv[1]
@@ -284,14 +335,19 @@ if __name__ == "__main__":
     parsed = parse_input(code)
     print(parsed)
     for stmt in parsed:
-        print("Parsed: " + str(stmt))
         if stmt[0] == "PRINTLN":
-            print("Parsed println")
-            print(stmt[1])
-            ast.children.append(ASTNode(ASTNodeType.PRINTLN, [stmt[1]]))
-        elif stmt[0] == "LET":
-            print("Parsed let")
+            build_node(stmt, ast)
+        if stmt[0] == "LET":
+            build_node(stmt, ast)
+        if stmt[0] == "FN0_VOID":
+            print("Adding fn0_void to AST")
+            print(stmt)
+            ast.children.append(ASTNode(ASTNodeType.FN0_VOID, stmt[1:]))
+            for expression in stmt[2]:
+                build_node(expression, ast)
+            ast.children.append(ASTNode(ASTNodeType.END_FN, [])) 
+        if stmt[0] == "INVOKE0":
+            print("Adding INVOKE0 to AST")
             print(stmt[1:])
-            ast.children.append(ASTNode(ASTNodeType.LET, stmt[1:]))
-
+            ast.children.append(ASTNode(ASTNodeType.INVOKE0, stmt[1:]))
     codegen(ast)

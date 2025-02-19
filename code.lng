@@ -1,9 +1,8 @@
-let fin: str = "\tfin\n"
-let int: u8 = 0
-print("\tfoo\n")
-print("\tbar\n")
-print("\t")
-print(int)
-print("\n")
-print(fin)
+fn secret_number() { 
+  let byte: u8 = 42
+  print(byte)
+  print("\n")
+}
 
+secret_number()
+print(byte)

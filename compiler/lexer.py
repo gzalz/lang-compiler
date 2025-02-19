@@ -4,6 +4,7 @@ import ply.lex as lex
 tokens = (
     "PRINTLN",
     "LET",
+    "FN",
     "COLON",
     "STRING",
     "SYMBOL",
@@ -11,6 +12,8 @@ tokens = (
     "LPAREN",
     "RPAREN",
     "NUMBER",
+    "LBRACE",
+    "RBRACE"
 )
 
 t_ignore = " \t"
@@ -39,6 +42,11 @@ def t_LET(t):
     t.lineno = t.lexer.lineno
     return t
 
+def t_FN(t):
+    r"fn"
+    t.lineno = t.lexer.lineno
+    return t
+
 
 def t_COLON(t):
     r":"
@@ -54,6 +62,17 @@ def t_LPAREN(t):
 
 def t_RPAREN(t):
     r"\)"
+    t.lineno = t.lexer.lineno
+    return t
+
+def t_LBRACE(t):
+    r"\{"
+    t.lineno = t.lexer.lineno
+    return t
+
+
+def t_RBRACE(t):
+    r"\}"
     t.lineno = t.lexer.lineno
     return t
 
