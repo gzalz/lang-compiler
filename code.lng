@@ -1,8 +1,9 @@
 fn secret_number() { 
-  let byte: u8 = 42
-  print(byte)
+  let s: str = "42"
+  print(s)
   print("\n")
 }
+
 secret_number()
 // This should not compile
-print(byte)
+print(s)

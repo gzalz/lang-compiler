@@ -89,10 +89,10 @@ def create_string_struct(module):
     return string_type
 
 
-def gen_string(module, builder, ir, value):
-    global GID
+def gen_string(name, module, builder, ir, value, scope):
     string_type = module.context.get_identified_type("String")
-    name = f"str_{GID}"
+    var_name = name
+    name = f"str_{name}"
 
     if value[0] == '"':
         string_value = (
@@ -109,7 +109,6 @@ def gen_string(module, builder, ir, value):
             ir.ArrayType(ir.IntType(8), capacity),
             bytearray(string_value.encode("utf8")),
         )
-        str_global.global_constant = True
 
         # Create a local string struct
         str_struct = builder.alloca(string_type, name=name)
@@ -129,29 +128,26 @@ def gen_string(module, builder, ir, value):
             builder.gep(str_struct, [ir.IntType(32)(0), ir.IntType(32)(2)]),
         )
 
-        GID += 1
         return str_struct
     else:
         # Handle variable lookup
-        if value not in GLOBAL_SCOPE:
-            raise Exception(f"Undefined variable: {value}")
-        var_ptr = GLOBAL_SCOPE[value]
-        return var_ptr
+        if var_name not in scope.keys():
+            print(f"Scope dump: {scope}")
+            raise Exception(f"Undefined variable: {var_name}")
+        return scope[var_name]
 
 
-def gen_u8(module, builder, ir, value):
-    global GID
-    name = f"u8_{GID}"
+def gen_u8(name, module, builder, ir, value, scope):
+    name = f"u8_{name}"
 
     u8_value = int(value)
-    u8_global = ir.GlobalVariable(module, ir.IntType(8), name)
+    u8_global = ir.Constant(ir.IntType(8), name)
     u8_global.initializer = ir.Constant(ir.IntType(8), u8_value)
-    u8_global.global_constant = True
 
     u8_var = builder.alloca(ir.IntType(8), name=name)
     builder.store(ir.Constant(ir.IntType(8), u8_value), u8_var)
 
-    GID += 1
+    #scope[name] = u8_var
     return u8_var
 
 
@@ -164,16 +160,13 @@ def create_println_function(module):
     )
     write_func = ir.Function(module, write_ty, name="write")
 
-    # Define the println function type
     string_type = module.context.get_identified_type("String")
     println_ty = ir.FunctionType(ir.VoidType(), [string_type.as_pointer()])
     println = ir.Function(module, println_ty, name="print")
 
-    # Create the function body
     block = println.append_basic_block(name="entry_println")
     builder = ir.IRBuilder(block)
 
-    # Extract the string struct fields
     str_ptr = println.args[0]
     data_ptr = builder.load(
         builder.gep(
@@ -185,14 +178,9 @@ def create_println_function(module):
             str_ptr, [ir.IntType(32)(0), ir.IntType(32)(2)], inbounds=True
         )
     )
-
     # File descriptor 1 (stdout)
     fd = ir.Constant(ir.IntType(64), 1)
-
-    # Call the 'write' syscall
     builder.call(write_func, [fd, data_ptr, length])
-
-    # Return void
     builder.ret_void()
 
 def create_function0_void(module, name):
@@ -209,39 +197,42 @@ def codegen_invoke0(name, module, builder, ir):
     print(f"[codegen] invoke0: {name}")
     builder.call(module.get_global(name), [])
 
-def codegen_println(node_arguments, module, builder, ir):
+def codegen_println(node_arguments, module, builder, ir, scope):
     print("[codegen] println: " + str(node_arguments))
     if not node_arguments[0][0] == '"':
-        print("[printvar-globalscope-dump] " + str(GLOBAL_SCOPE))
-        if isinstance(GLOBAL_SCOPE[node_arguments[0]], int):
+        print("[printvar-globalscope-dump] " + str(scope))
+        if scope.get(node_arguments[0]) and isinstance(scope[node_arguments[0]], int):
             arg_ptr = gen_string(
+                node_arguments[0],
                 module,
                 builder,
                 ir,
-                '"%d"' % GLOBAL_SCOPE[node_arguments[0]],
+                '"%d"' % scope[node_arguments[0]],
+                scope
             )
         else:
             arg_ptr = gen_string(
-                module, builder, ir, GLOBAL_SCOPE[node_arguments[0]]
+                node_arguments[0], module, builder, ir, node_arguments[0], scope
             )
     else:
-        arg_ptr = gen_string(module, builder, ir, node_arguments[0])
+        arg_ptr = gen_string(node_arguments[0], module, builder, ir, node_arguments[0], scope)
     print("Arg Ptr: " + str(type(arg_ptr)))
     builder.call(module.get_global("print"), [arg_ptr])
 
-def codegen_let(node_arguments, module, builder, ir):
+def codegen_let(node_arguments, module, builder, ir, scope):
     print(f"[codegen] let: {node_arguments}")
     var_name = node_arguments[0]
     var_type = node_arguments[1]
     var_value = node_arguments[2]
+    var_struct = None
     print("Let Args: " + str(node_arguments))
     if var_type == "u8":
         if var_value > 255 or var_value < 0:
             raise Exception("u8 value must be between 0 and 255")
-        var_struct = gen_u8(module, builder, ir, var_value)
+        var_struct = gen_u8(var_name, module, builder, ir, var_value, scope)
     if var_type == "str":
-        var_struct = gen_string(module, builder, ir, var_value)
-    GLOBAL_SCOPE[var_name] = var_value
+        var_struct = gen_string(var_name, module, builder, ir, var_value, scope)
+    scope[var_name] = var_struct
 
 def codegen(ast):
     # Create a new LLVM module
@@ -255,6 +246,8 @@ def codegen(ast):
     end_fn_callback = None
     puts_func = None
     ast_iter = ASTIterator(ast)
+    main_scope = {}
+    scope = {}
     while ast_iter is not None:
         node = ast_iter.next()
         print(node)
@@ -265,16 +258,19 @@ def codegen(ast):
             builder = bldr
             main_builder = bldr
         elif node.node_type == ASTNodeType.PRINTLN:
-            codegen_println(node.arguments, module, builder, ir)    
+            codegen_println(node.arguments, module, builder, ir, scope)    
         elif node.node_type == ASTNodeType.LET:
-            codegen_let(node.arguments, module, builder, ir) 
+            codegen_let(node.arguments, module, builder, ir, scope) 
         elif node.node_type == ASTNodeType.FN0_VOID:
             fn_name = node.arguments[0]
             builder, callback = create_function0_void(module, fn_name) 
             end_fn_callback = callback
             builder = builder
+            main_scope = scope
+            scope = {}
         elif node.node_type == ASTNodeType.END_FN:
             builder = main_builder
+            scope = main_scope
             end_fn_callback()
         elif node.node_type == ASTNodeType.INVOKE0:
             codegen_invoke0(node.arguments[0], module, builder, ir)
