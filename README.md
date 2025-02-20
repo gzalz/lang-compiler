@@ -2,7 +2,7 @@
 See code.lng for an example program.
 
 ## Expressions
-`let {name}: {type} = expression`
+`const {name}: {type} = expression`
 `print(expression)`
 
 Variable names can be alphanumeric.
