@@ -1,9 +1,13 @@
 fn secret_number() { 
-  let s: str = "42"
-  print(s)
+  let b: u8 = 42
+  print(b)
   print("\n")
 }
 
+fn hello_world() {
+  print("Hello, world!\n")
+}
+
+print("Revealing secret number: ")
 secret_number()
-// This should not compile
-print(s)
+hello_world()

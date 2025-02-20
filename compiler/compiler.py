@@ -137,7 +137,7 @@ def gen_string(name, module, builder, ir, value, scope):
         return scope[var_name]
 
 
-def gen_u8(name, module, builder, ir, value, scope):
+def gen_u8(name, module, builder, ir, value):
     name = f"u8_{name}"
 
     u8_value = int(value)
@@ -147,7 +147,6 @@ def gen_u8(name, module, builder, ir, value, scope):
     u8_var = builder.alloca(ir.IntType(8), name=name)
     builder.store(ir.Constant(ir.IntType(8), u8_value), u8_var)
 
-    #scope[name] = u8_var
     return u8_var
 
 
@@ -197,18 +196,19 @@ def codegen_invoke0(name, module, builder, ir):
     print(f"[codegen] invoke0: {name}")
     builder.call(module.get_global(name), [])
 
-def codegen_println(node_arguments, module, builder, ir, scope):
+def codegen_println(node_arguments, module, builder, ir, scope, values):
     print("[codegen] println: " + str(node_arguments))
     if not node_arguments[0][0] == '"':
-        print("[printvar-globalscope-dump] " + str(scope))
-        if scope.get(node_arguments[0]) and isinstance(scope[node_arguments[0]], int):
+        print("[values-dump] " + str(values))
+        if not values.get(node_arguments[0]) is None and isinstance(values[node_arguments[0]], int):
+            print("Got integer value")
             arg_ptr = gen_string(
                 node_arguments[0],
                 module,
                 builder,
                 ir,
-                '"%d"' % scope[node_arguments[0]],
-                scope
+                '"%d"' % values[node_arguments[0]],
+                scope # does this need to be a thing?
             )
         else:
             arg_ptr = gen_string(
@@ -219,7 +219,7 @@ def codegen_println(node_arguments, module, builder, ir, scope):
     print("Arg Ptr: " + str(type(arg_ptr)))
     builder.call(module.get_global("print"), [arg_ptr])
 
-def codegen_let(node_arguments, module, builder, ir, scope):
+def codegen_let(node_arguments, module, builder, ir, scope, values):
     print(f"[codegen] let: {node_arguments}")
     var_name = node_arguments[0]
     var_type = node_arguments[1]
@@ -229,10 +229,11 @@ def codegen_let(node_arguments, module, builder, ir, scope):
     if var_type == "u8":
         if var_value > 255 or var_value < 0:
             raise Exception("u8 value must be between 0 and 255")
-        var_struct = gen_u8(var_name, module, builder, ir, var_value, scope)
+        var_struct = gen_u8(var_name, module, builder, ir, var_value)
     if var_type == "str":
         var_struct = gen_string(var_name, module, builder, ir, var_value, scope)
     scope[var_name] = var_struct
+    values[var_name] = var_value
 
 def codegen(ast):
     # Create a new LLVM module
@@ -248,6 +249,8 @@ def codegen(ast):
     ast_iter = ASTIterator(ast)
     main_scope = {}
     scope = {}
+    # hacky af we need internal type conversions 
+    values = {}
     while ast_iter is not None:
         node = ast_iter.next()
         print(node)
@@ -258,9 +261,9 @@ def codegen(ast):
             builder = bldr
             main_builder = bldr
         elif node.node_type == ASTNodeType.PRINTLN:
-            codegen_println(node.arguments, module, builder, ir, scope)    
+            codegen_println(node.arguments, module, builder, ir, scope, values)    
         elif node.node_type == ASTNodeType.LET:
-            codegen_let(node.arguments, module, builder, ir, scope) 
+            codegen_let(node.arguments, module, builder, ir, scope, values) 
         elif node.node_type == ASTNodeType.FN0_VOID:
             fn_name = node.arguments[0]
             builder, callback = create_function0_void(module, fn_name) 
