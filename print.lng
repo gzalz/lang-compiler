@@ -1,5 +1,5 @@
-let int: u8 = 255
-let fin: str = "\tfin\n"
+const int: u8 = 255
+const fin: str = "\tfin\n"
 print("\tfoo\n")
 print("\tbar\n")
 print("\t")

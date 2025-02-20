@@ -11,7 +11,7 @@ Rule 5     expression -> NUMBER
 Rule 6     statement -> COMMENT SYMBOL
 Rule 7     statement -> SYMBOL LPAREN RPAREN
 Rule 8     statement -> PRINTLN LPAREN expression RPAREN
-Rule 9     statement -> LET SYMBOL COLON SYMBOL EQUALS expression
+Rule 9     statement -> CONST SYMBOL COLON SYMBOL EQUALS expression
 Rule 10    statement -> FN SYMBOL LPAREN RPAREN LBRACE statements RBRACE
 Rule 11    statement -> FN SYMBOL LPAREN SYMBOL COLON SYMBOL RPAREN
 Rule 12    statement -> FN SYMBOL LPAREN RPAREN COLON SYMBOL
@@ -21,10 +21,10 @@ Terminals, with rules where they appear
 
 COLON                : 9 11 12 13 13
 COMMENT              : 6
+CONST                : 9
 EQUALS               : 9
 FN                   : 10 11 12 13
 LBRACE               : 10
-LET                  : 9
 LPAREN               : 7 8 10 11 12 13
 NUMBER               : 5
 PRINTLN              : 8
@@ -50,7 +50,7 @@ state 0
     (6) statement -> . COMMENT SYMBOL
     (7) statement -> . SYMBOL LPAREN RPAREN
     (8) statement -> . PRINTLN LPAREN expression RPAREN
-    (9) statement -> . LET SYMBOL COLON SYMBOL EQUALS expression
+    (9) statement -> . CONST SYMBOL COLON SYMBOL EQUALS expression
     (10) statement -> . FN SYMBOL LPAREN RPAREN LBRACE statements RBRACE
     (11) statement -> . FN SYMBOL LPAREN SYMBOL COLON SYMBOL RPAREN
     (12) statement -> . FN SYMBOL LPAREN RPAREN COLON SYMBOL
@@ -59,7 +59,7 @@ state 0
     COMMENT         shift and go to state 3
     SYMBOL          shift and go to state 4
     PRINTLN         shift and go to state 5
-    LET             shift and go to state 6
+    CONST           shift and go to state 6
     FN              shift and go to state 7
 
     statements                     shift and go to state 1
@@ -72,7 +72,7 @@ state 1
     (6) statement -> . COMMENT SYMBOL
     (7) statement -> . SYMBOL LPAREN RPAREN
     (8) statement -> . PRINTLN LPAREN expression RPAREN
-    (9) statement -> . LET SYMBOL COLON SYMBOL EQUALS expression
+    (9) statement -> . CONST SYMBOL COLON SYMBOL EQUALS expression
     (10) statement -> . FN SYMBOL LPAREN RPAREN LBRACE statements RBRACE
     (11) statement -> . FN SYMBOL LPAREN SYMBOL COLON SYMBOL RPAREN
     (12) statement -> . FN SYMBOL LPAREN RPAREN COLON SYMBOL
@@ -81,7 +81,7 @@ state 1
     COMMENT         shift and go to state 3
     SYMBOL          shift and go to state 4
     PRINTLN         shift and go to state 5
-    LET             shift and go to state 6
+    CONST           shift and go to state 6
     FN              shift and go to state 7
 
     statement                      shift and go to state 8
@@ -93,7 +93,7 @@ state 2
     COMMENT         reduce using rule 1 (statements -> statement .)
     SYMBOL          reduce using rule 1 (statements -> statement .)
     PRINTLN         reduce using rule 1 (statements -> statement .)
-    LET             reduce using rule 1 (statements -> statement .)
+    CONST           reduce using rule 1 (statements -> statement .)
     FN              reduce using rule 1 (statements -> statement .)
     $end            reduce using rule 1 (statements -> statement .)
     RBRACE          reduce using rule 1 (statements -> statement .)
@@ -122,7 +122,7 @@ state 5
 
 state 6
 
-    (9) statement -> LET . SYMBOL COLON SYMBOL EQUALS expression
+    (9) statement -> CONST . SYMBOL COLON SYMBOL EQUALS expression
 
     SYMBOL          shift and go to state 12
 
@@ -144,7 +144,7 @@ state 8
     COMMENT         reduce using rule 2 (statements -> statements statement .)
     SYMBOL          reduce using rule 2 (statements -> statements statement .)
     PRINTLN         reduce using rule 2 (statements -> statements statement .)
-    LET             reduce using rule 2 (statements -> statements statement .)
+    CONST           reduce using rule 2 (statements -> statements statement .)
     FN              reduce using rule 2 (statements -> statements statement .)
     $end            reduce using rule 2 (statements -> statements statement .)
     RBRACE          reduce using rule 2 (statements -> statements statement .)
@@ -157,7 +157,7 @@ state 9
     COMMENT         reduce using rule 6 (statement -> COMMENT SYMBOL .)
     SYMBOL          reduce using rule 6 (statement -> COMMENT SYMBOL .)
     PRINTLN         reduce using rule 6 (statement -> COMMENT SYMBOL .)
-    LET             reduce using rule 6 (statement -> COMMENT SYMBOL .)
+    CONST           reduce using rule 6 (statement -> COMMENT SYMBOL .)
     FN              reduce using rule 6 (statement -> COMMENT SYMBOL .)
     $end            reduce using rule 6 (statement -> COMMENT SYMBOL .)
     RBRACE          reduce using rule 6 (statement -> COMMENT SYMBOL .)
@@ -185,7 +185,7 @@ state 11
 
 state 12
 
-    (9) statement -> LET SYMBOL . COLON SYMBOL EQUALS expression
+    (9) statement -> CONST SYMBOL . COLON SYMBOL EQUALS expression
 
     COLON           shift and go to state 19
 
@@ -207,7 +207,7 @@ state 14
     COMMENT         reduce using rule 7 (statement -> SYMBOL LPAREN RPAREN .)
     SYMBOL          reduce using rule 7 (statement -> SYMBOL LPAREN RPAREN .)
     PRINTLN         reduce using rule 7 (statement -> SYMBOL LPAREN RPAREN .)
-    LET             reduce using rule 7 (statement -> SYMBOL LPAREN RPAREN .)
+    CONST           reduce using rule 7 (statement -> SYMBOL LPAREN RPAREN .)
     FN              reduce using rule 7 (statement -> SYMBOL LPAREN RPAREN .)
     $end            reduce using rule 7 (statement -> SYMBOL LPAREN RPAREN .)
     RBRACE          reduce using rule 7 (statement -> SYMBOL LPAREN RPAREN .)
@@ -228,7 +228,7 @@ state 16
     COMMENT         reduce using rule 3 (expression -> STRING .)
     SYMBOL          reduce using rule 3 (expression -> STRING .)
     PRINTLN         reduce using rule 3 (expression -> STRING .)
-    LET             reduce using rule 3 (expression -> STRING .)
+    CONST           reduce using rule 3 (expression -> STRING .)
     FN              reduce using rule 3 (expression -> STRING .)
     $end            reduce using rule 3 (expression -> STRING .)
     RBRACE          reduce using rule 3 (expression -> STRING .)
@@ -242,7 +242,7 @@ state 17
     COMMENT         reduce using rule 4 (expression -> SYMBOL .)
     SYMBOL          reduce using rule 4 (expression -> SYMBOL .)
     PRINTLN         reduce using rule 4 (expression -> SYMBOL .)
-    LET             reduce using rule 4 (expression -> SYMBOL .)
+    CONST           reduce using rule 4 (expression -> SYMBOL .)
     FN              reduce using rule 4 (expression -> SYMBOL .)
     $end            reduce using rule 4 (expression -> SYMBOL .)
     RBRACE          reduce using rule 4 (expression -> SYMBOL .)
@@ -256,7 +256,7 @@ state 18
     COMMENT         reduce using rule 5 (expression -> NUMBER .)
     SYMBOL          reduce using rule 5 (expression -> NUMBER .)
     PRINTLN         reduce using rule 5 (expression -> NUMBER .)
-    LET             reduce using rule 5 (expression -> NUMBER .)
+    CONST           reduce using rule 5 (expression -> NUMBER .)
     FN              reduce using rule 5 (expression -> NUMBER .)
     $end            reduce using rule 5 (expression -> NUMBER .)
     RBRACE          reduce using rule 5 (expression -> NUMBER .)
@@ -264,7 +264,7 @@ state 18
 
 state 19
 
-    (9) statement -> LET SYMBOL COLON . SYMBOL EQUALS expression
+    (9) statement -> CONST SYMBOL COLON . SYMBOL EQUALS expression
 
     SYMBOL          shift and go to state 22
 
@@ -287,7 +287,7 @@ state 21
     COMMENT         reduce using rule 8 (statement -> PRINTLN LPAREN expression RPAREN .)
     SYMBOL          reduce using rule 8 (statement -> PRINTLN LPAREN expression RPAREN .)
     PRINTLN         reduce using rule 8 (statement -> PRINTLN LPAREN expression RPAREN .)
-    LET             reduce using rule 8 (statement -> PRINTLN LPAREN expression RPAREN .)
+    CONST           reduce using rule 8 (statement -> PRINTLN LPAREN expression RPAREN .)
     FN              reduce using rule 8 (statement -> PRINTLN LPAREN expression RPAREN .)
     $end            reduce using rule 8 (statement -> PRINTLN LPAREN expression RPAREN .)
     RBRACE          reduce using rule 8 (statement -> PRINTLN LPAREN expression RPAREN .)
@@ -295,7 +295,7 @@ state 21
 
 state 22
 
-    (9) statement -> LET SYMBOL COLON SYMBOL . EQUALS expression
+    (9) statement -> CONST SYMBOL COLON SYMBOL . EQUALS expression
 
     EQUALS          shift and go to state 25
 
@@ -319,7 +319,7 @@ state 24
 
 state 25
 
-    (9) statement -> LET SYMBOL COLON SYMBOL EQUALS . expression
+    (9) statement -> CONST SYMBOL COLON SYMBOL EQUALS . expression
     (3) expression -> . STRING
     (4) expression -> . SYMBOL
     (5) expression -> . NUMBER
@@ -346,7 +346,7 @@ state 27
     (6) statement -> . COMMENT SYMBOL
     (7) statement -> . SYMBOL LPAREN RPAREN
     (8) statement -> . PRINTLN LPAREN expression RPAREN
-    (9) statement -> . LET SYMBOL COLON SYMBOL EQUALS expression
+    (9) statement -> . CONST SYMBOL COLON SYMBOL EQUALS expression
     (10) statement -> . FN SYMBOL LPAREN RPAREN LBRACE statements RBRACE
     (11) statement -> . FN SYMBOL LPAREN SYMBOL COLON SYMBOL RPAREN
     (12) statement -> . FN SYMBOL LPAREN RPAREN COLON SYMBOL
@@ -355,7 +355,7 @@ state 27
     COMMENT         shift and go to state 3
     SYMBOL          shift and go to state 4
     PRINTLN         shift and go to state 5
-    LET             shift and go to state 6
+    CONST           shift and go to state 6
     FN              shift and go to state 7
 
     statements                     shift and go to state 31
@@ -370,15 +370,15 @@ state 28
 
 state 29
 
-    (9) statement -> LET SYMBOL COLON SYMBOL EQUALS expression .
+    (9) statement -> CONST SYMBOL COLON SYMBOL EQUALS expression .
 
-    COMMENT         reduce using rule 9 (statement -> LET SYMBOL COLON SYMBOL EQUALS expression .)
-    SYMBOL          reduce using rule 9 (statement -> LET SYMBOL COLON SYMBOL EQUALS expression .)
-    PRINTLN         reduce using rule 9 (statement -> LET SYMBOL COLON SYMBOL EQUALS expression .)
-    LET             reduce using rule 9 (statement -> LET SYMBOL COLON SYMBOL EQUALS expression .)
-    FN              reduce using rule 9 (statement -> LET SYMBOL COLON SYMBOL EQUALS expression .)
-    $end            reduce using rule 9 (statement -> LET SYMBOL COLON SYMBOL EQUALS expression .)
-    RBRACE          reduce using rule 9 (statement -> LET SYMBOL COLON SYMBOL EQUALS expression .)
+    COMMENT         reduce using rule 9 (statement -> CONST SYMBOL COLON SYMBOL EQUALS expression .)
+    SYMBOL          reduce using rule 9 (statement -> CONST SYMBOL COLON SYMBOL EQUALS expression .)
+    PRINTLN         reduce using rule 9 (statement -> CONST SYMBOL COLON SYMBOL EQUALS expression .)
+    CONST           reduce using rule 9 (statement -> CONST SYMBOL COLON SYMBOL EQUALS expression .)
+    FN              reduce using rule 9 (statement -> CONST SYMBOL COLON SYMBOL EQUALS expression .)
+    $end            reduce using rule 9 (statement -> CONST SYMBOL COLON SYMBOL EQUALS expression .)
+    RBRACE          reduce using rule 9 (statement -> CONST SYMBOL COLON SYMBOL EQUALS expression .)
 
 
 state 30
@@ -396,7 +396,7 @@ state 31
     (6) statement -> . COMMENT SYMBOL
     (7) statement -> . SYMBOL LPAREN RPAREN
     (8) statement -> . PRINTLN LPAREN expression RPAREN
-    (9) statement -> . LET SYMBOL COLON SYMBOL EQUALS expression
+    (9) statement -> . CONST SYMBOL COLON SYMBOL EQUALS expression
     (10) statement -> . FN SYMBOL LPAREN RPAREN LBRACE statements RBRACE
     (11) statement -> . FN SYMBOL LPAREN SYMBOL COLON SYMBOL RPAREN
     (12) statement -> . FN SYMBOL LPAREN RPAREN COLON SYMBOL
@@ -406,7 +406,7 @@ state 31
     COMMENT         shift and go to state 3
     SYMBOL          shift and go to state 4
     PRINTLN         shift and go to state 5
-    LET             shift and go to state 6
+    CONST           shift and go to state 6
     FN              shift and go to state 7
 
     statement                      shift and go to state 8
@@ -418,7 +418,7 @@ state 32
     COMMENT         reduce using rule 12 (statement -> FN SYMBOL LPAREN RPAREN COLON SYMBOL .)
     SYMBOL          reduce using rule 12 (statement -> FN SYMBOL LPAREN RPAREN COLON SYMBOL .)
     PRINTLN         reduce using rule 12 (statement -> FN SYMBOL LPAREN RPAREN COLON SYMBOL .)
-    LET             reduce using rule 12 (statement -> FN SYMBOL LPAREN RPAREN COLON SYMBOL .)
+    CONST           reduce using rule 12 (statement -> FN SYMBOL LPAREN RPAREN COLON SYMBOL .)
     FN              reduce using rule 12 (statement -> FN SYMBOL LPAREN RPAREN COLON SYMBOL .)
     $end            reduce using rule 12 (statement -> FN SYMBOL LPAREN RPAREN COLON SYMBOL .)
     RBRACE          reduce using rule 12 (statement -> FN SYMBOL LPAREN RPAREN COLON SYMBOL .)
@@ -432,7 +432,7 @@ state 33
     COMMENT         reduce using rule 11 (statement -> FN SYMBOL LPAREN SYMBOL COLON SYMBOL RPAREN .)
     SYMBOL          reduce using rule 11 (statement -> FN SYMBOL LPAREN SYMBOL COLON SYMBOL RPAREN .)
     PRINTLN         reduce using rule 11 (statement -> FN SYMBOL LPAREN SYMBOL COLON SYMBOL RPAREN .)
-    LET             reduce using rule 11 (statement -> FN SYMBOL LPAREN SYMBOL COLON SYMBOL RPAREN .)
+    CONST           reduce using rule 11 (statement -> FN SYMBOL LPAREN SYMBOL COLON SYMBOL RPAREN .)
     FN              reduce using rule 11 (statement -> FN SYMBOL LPAREN SYMBOL COLON SYMBOL RPAREN .)
     $end            reduce using rule 11 (statement -> FN SYMBOL LPAREN SYMBOL COLON SYMBOL RPAREN .)
     RBRACE          reduce using rule 11 (statement -> FN SYMBOL LPAREN SYMBOL COLON SYMBOL RPAREN .)
@@ -446,7 +446,7 @@ state 34
     COMMENT         reduce using rule 10 (statement -> FN SYMBOL LPAREN RPAREN LBRACE statements RBRACE .)
     SYMBOL          reduce using rule 10 (statement -> FN SYMBOL LPAREN RPAREN LBRACE statements RBRACE .)
     PRINTLN         reduce using rule 10 (statement -> FN SYMBOL LPAREN RPAREN LBRACE statements RBRACE .)
-    LET             reduce using rule 10 (statement -> FN SYMBOL LPAREN RPAREN LBRACE statements RBRACE .)
+    CONST           reduce using rule 10 (statement -> FN SYMBOL LPAREN RPAREN LBRACE statements RBRACE .)
     FN              reduce using rule 10 (statement -> FN SYMBOL LPAREN RPAREN LBRACE statements RBRACE .)
     $end            reduce using rule 10 (statement -> FN SYMBOL LPAREN RPAREN LBRACE statements RBRACE .)
     RBRACE          reduce using rule 10 (statement -> FN SYMBOL LPAREN RPAREN LBRACE statements RBRACE .)
@@ -466,7 +466,7 @@ state 36
     COMMENT         reduce using rule 13 (statement -> FN SYMBOL LPAREN SYMBOL COLON SYMBOL RPAREN COLON SYMBOL .)
     SYMBOL          reduce using rule 13 (statement -> FN SYMBOL LPAREN SYMBOL COLON SYMBOL RPAREN COLON SYMBOL .)
     PRINTLN         reduce using rule 13 (statement -> FN SYMBOL LPAREN SYMBOL COLON SYMBOL RPAREN COLON SYMBOL .)
-    LET             reduce using rule 13 (statement -> FN SYMBOL LPAREN SYMBOL COLON SYMBOL RPAREN COLON SYMBOL .)
+    CONST           reduce using rule 13 (statement -> FN SYMBOL LPAREN SYMBOL COLON SYMBOL RPAREN COLON SYMBOL .)
     FN              reduce using rule 13 (statement -> FN SYMBOL LPAREN SYMBOL COLON SYMBOL RPAREN COLON SYMBOL .)
     $end            reduce using rule 13 (statement -> FN SYMBOL LPAREN SYMBOL COLON SYMBOL RPAREN COLON SYMBOL .)
     RBRACE          reduce using rule 13 (statement -> FN SYMBOL LPAREN SYMBOL COLON SYMBOL RPAREN COLON SYMBOL .)

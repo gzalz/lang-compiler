@@ -3,7 +3,7 @@ import ply.yacc as yacc
 # Define the tokens (this should match the tokens defined in the lexer)
 tokens = (
     "PRINTLN",
-    "LET",
+    "CONST",
     "FN",
     "EQUALS",
     "COLON",
@@ -58,16 +58,16 @@ def p_statement_println(p):
     p[0] = ("PRINTLN", p[3])
 
 
-def p_statement_let(p):
-    "statement : LET SYMBOL COLON SYMBOL EQUALS expression"
-    print(f"let statement found at line {p.lineno(1)}: {p[2]}: {p[4]} = {p[6]}")
+def p_statement_const(p):
+    "statement : CONST SYMBOL COLON SYMBOL EQUALS expression"
+    print(f"const statement found at line {p.lineno(1)}: {p[2]}: {p[4]} = {p[6]}")
     if not p[4] in {"str", "u8"}:
         print(f"Type error: {p[4]} is not a valid type at line {p.lineno}")
         exit(3)
     print(
-        f"[parser] let statement found at line {p.lineno(1)}: {p[2]}: {p[4]} = {p[6]}"
+        f"[parser] const statement found at line {p.lineno(1)}: {p[2]}: {p[4]} = {p[6]}"
     )
-    p[0] = ("LET", p[2], p[4], p[6])
+    p[0] = ("CONST", p[2], p[4], p[6])
 
 def p_statement_fn_0_void(p):
     "statement : FN SYMBOL LPAREN RPAREN LBRACE statements RBRACE"

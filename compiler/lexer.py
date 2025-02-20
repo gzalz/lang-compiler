@@ -3,7 +3,7 @@ import ply.lex as lex
 # Lexer definition
 tokens = (
     "PRINTLN",
-    "LET",
+    "CONST",
     "FN",
     "COLON",
     "STRING",
@@ -41,8 +41,8 @@ def t_PRINTLN(t):
     return t
 
 
-def t_LET(t):
-    r"let"
+def t_CONST(t):
+    r"const"
     t.lineno = t.lexer.lineno
     return t
 

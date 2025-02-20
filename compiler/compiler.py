@@ -51,7 +51,7 @@ class ASTNode:
 
 class ASTNodeType(Enum):
     MAIN = 1
-    LET = 2
+    CONST = 2
     PRINTLN = 3
     END_FN = 4
     FN0_VOID = 5
@@ -219,13 +219,13 @@ def codegen_println(node_arguments, module, builder, ir, scope, values):
     print("Arg Ptr: " + str(type(arg_ptr)))
     builder.call(module.get_global("print"), [arg_ptr])
 
-def codegen_let(node_arguments, module, builder, ir, scope, values):
-    print(f"[codegen] let: {node_arguments}")
+def codegen_const(node_arguments, module, builder, ir, scope, values):
+    print(f"[codegen] const: {node_arguments}")
     var_name = node_arguments[0]
     var_type = node_arguments[1]
     var_value = node_arguments[2]
     var_struct = None
-    print("Let Args: " + str(node_arguments))
+    print("const Args: " + str(node_arguments))
     if var_type == "u8":
         if var_value > 255 or var_value < 0:
             raise Exception("u8 value must be between 0 and 255")
@@ -262,8 +262,8 @@ def codegen(ast):
             main_builder = bldr
         elif node.node_type == ASTNodeType.PRINTLN:
             codegen_println(node.arguments, module, builder, ir, scope, values)    
-        elif node.node_type == ASTNodeType.LET:
-            codegen_let(node.arguments, module, builder, ir, scope, values) 
+        elif node.node_type == ASTNodeType.CONST:
+            codegen_const(node.arguments, module, builder, ir, scope, values) 
         elif node.node_type == ASTNodeType.FN0_VOID:
             fn_name = node.arguments[0]
             builder, callback = create_function0_void(module, fn_name) 
@@ -316,10 +316,10 @@ def build_node(stmt, ast):
         print("Adding println to AST")
         print(stmt[1])
         ast.children.append(ASTNode(ASTNodeType.PRINTLN, [stmt[1]]))
-    if stmt[0] == "LET":
-        print("Adding let to AST")
+    if stmt[0] == "CONST":
+        print("Adding const to AST")
         print(stmt[1:])
-        ast.children.append(ASTNode(ASTNodeType.LET, stmt[1:]))
+        ast.children.append(ASTNode(ASTNodeType.CONST, stmt[1:]))
     if stmt[0] == "INVOKE":
         print("Adding INVOKE0 to AST")
         print(stmt[1:])
@@ -336,7 +336,7 @@ if __name__ == "__main__":
     for stmt in parsed:
         if stmt[0] == "PRINTLN":
             build_node(stmt, ast)
-        if stmt[0] == "LET":
+        if stmt[0] == "CONST":
             build_node(stmt, ast)
         if stmt[0] == "FN0_VOID":
             print("Adding fn0_void to AST")

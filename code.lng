@@ -1,5 +1,5 @@
 fn secret_number() { 
-  let b: u8 = 42
+  const b: u8 = 42
   print(b)
   print("\n")
 }
